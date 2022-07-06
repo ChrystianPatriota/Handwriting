@@ -2,41 +2,74 @@ import numpy as np
 import pandas as pd
 
 
-def doAllArticle(df, T, testID):
-    modulePosition(df, testID)
-    moduleVelocityArticle(df, T, testID)
+def listPeopleArticle(paths, Fs, testID):
+    listPerson = []
+
+    for path in paths:
+
+        person = pd.read_csv(path, sep=';', names=["x", "y", "z", "Pressure", 'GripAngle', 'Timestamp', 'TestID'])
+        df_testID = person[person.TestID == testID].copy()
+        if not df_testID.empty:
+            doAllArticle(df_testID, Fs, testID)
+            listPerson.append(df_testID)
+
+    return listPerson
 
 
-def doAll(df, T, testID):
+def doAllArticle(df, Fs, testID):
     modulePosition(df, testID)
-    moduleVelocity(df, T, testID)
-    moduleAcceleration(df, T, testID)
+    moduleVelocityArticle(df, Fs, testID)
 
 
 def modulePosition(df, testID):
-    df_testID = df[df.TestID == testID]
-    module = np.full(df.shape[0], np.NaN, dtype=float)
-    x = df_testID['x'].copy()
-    y = df_testID['y'].copy()
-    for i in df_testID.index:
-        if i == df_testID.index[0]:
+    module = np.empty(df.shape[0], dtype=float)
+    x = df['x']
+    y = df['y']
+    for i in df.index:
+        if i == df.index[-1]:
             module[i] = 0
         else:
-            module[i] = ((x[i - 1] - x[i]) ** 2 + (y[i - 1] - y[i]) ** 2) ** (1 / 2)
-    df.insert(3, 'position_' + str(testID), module)
-    return df
+            module[i] = ((x[i + 1] - x[i]) ** 2 + (y[i + 1] - y[i]) ** 2) ** (1 / 2)
+    df.insert(3, f'position_{testID}', module)
 
 
-def moduleVelocityArticle(df, T, testID):
-    df_testID = df[df.TestID == testID]
-    module = np.full(df.shape[0], np.NaN, dtype=float)
-    for i in df_testID.index:
-        module[i] = df["position_" + str(testID)][i] / T
+def moduleVelocityArticle(df, Fs, testID):
+    module = np.empty(df.shape[0], dtype=float)
+    for i in df.index:
+        module[i] = df[f"position_{testID}"][i] * Fs
 
-    df["velocity_" + str(testID)] = module
-    return df
+    df[f"velocity_{testID}"] = module
 
 
+def weightedAverage(list1, list2):
+    multi = np.dot(list1, list2)
+    return multi / list1.sum()
+
+
+def tableCreaterArticle(listPerson, diagnoses, testID):
+    table = np.empty((len(listPerson), 3))
+    for i in range(len(listPerson)):
+        table[i][0] = weightedAverage(listPerson[i][f'position_{testID}'], listPerson[i][f'velocity_{testID}'])
+        table[i][1] = weightedAverage(listPerson[i][f'position_{testID}'], listPerson[i]['Pressure'])
+        table[i][2] = table[i][0] * table[i][1]
+    df = pd.DataFrame(data=table, columns=['velocityWeighted', 'pressureWeighted', 'CISP'])
+    return df, np.full((len(listPerson)), fill_value=diagnoses)
+
+
+'''
+def listPeople(paths, testID):
+    listPerson = []
+    for path in paths:
+        person = pd.read_csv(path, sep=';',
+                             names=["x", "y", "z", "Pressure", 'GripAngle', 'Timestamp', 'TestID'])
+
+        df_testID = person[person.TestID == testID]
+        if not df_testID.empty:
+            doAll(person, 1 / 133, testID)
+            listPerson.append(person)
+
+    return listPerson
+'''
 """
 def moduleVelocity(df, T, testID):
     df_testID = df[df.TestID == testID]
@@ -82,24 +115,7 @@ def moduleAcceleration(df, T, testID):
     return df
 """
 
-
-def weightedAverage(list1, list2):
-    multi = np.dot(list1.dropna(), list2[list1.dropna().index])
-    return multi / list1.sum()
-
-
-def tableCreaterArticle(listPerson, diagnoses, testID):
-    table = np.empty((len(listPerson), 3))
-    for i in range(len(listPerson)):
-        table[i][0] = weightedAverage(listPerson[i]['position_' + str(testID)],
-                                      listPerson[i]['velocity_' + str(testID)])
-        table[i][1] = weightedAverage(listPerson[i]['position_' + str(testID)], listPerson[i]['Pressure'])
-        table[i][2] = table[i][0] * table[i][1]
-    df = pd.DataFrame(data=table,
-                      columns=['velocityWeighted', 'pressureWeighted', 'CISP'])
-    return df, np.full((len(listPerson)), fill_value=diagnoses)
-
-
+'''
 def tableCreater(listPerson, diagnoses, testID):
     table = np.empty((len(listPerson), 3))
     for i in range(len(listPerson)):
@@ -109,31 +125,11 @@ def tableCreater(listPerson, diagnoses, testID):
     df = pd.DataFrame(data=table,
                       columns=['totalDistance', 'meanVelocity', 'meanAcceleration'])
     return df, np.full((len(listPerson)), fill_value=diagnoses)
+'''
 
-
-def listPeopleArticle(paths, testID):
-    listPerson = []
-    for path in paths:
-        person = pd.read_csv(path, sep=';',
-                             names=["x", "y", "z", "Pressure", 'GripAngle', 'Timestamp', 'TestID'])
-
-        df_testID = person[person.TestID == testID]
-        if not df_testID.empty:
-            doAllArticle(person, 1/133, testID)
-            listPerson.append(person)
-
-    return listPerson
-
-
-def listPeople(paths, testID):
-    listPerson = []
-    for path in paths:
-        person = pd.read_csv(path, sep=';',
-                             names=["x", "y", "z", "Pressure", 'GripAngle', 'Timestamp', 'TestID'])
-
-        df_testID = person[person.TestID == testID]
-        if not df_testID.empty:
-            doAll(person, 1/133, testID)
-            listPerson.append(person)
-
-    return listPerson
+'''
+def doAll(df, T, testID):
+    modulePosition(df, testID)
+    moduleVelocity(df, T, testID)
+    moduleAcceleration(df, T, testID)
+'''

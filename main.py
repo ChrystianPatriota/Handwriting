@@ -7,7 +7,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 
-from Utils import tableCreater, listPeople, tableCreaterArticle, listPeopleArticle
+from Utils import tableCreaterArticle, listPeopleArticle
 
 path_control = [
     'data_motion/hw_dataset/control/C_0001.txt',
@@ -92,17 +92,16 @@ path_parkinson = [
     'data_motion/new_dataset/parkinson/H_p000-0043.txt'
 ]
 testID = 0
-listControl = listPeopleArticle(path_control, testID)
-print(listControl[0])
-listParkinson = listPeopleArticle(path_parkinson, testID)
+Fs = 133
+listControl = listPeopleArticle(path_control, Fs, testID)
+listParkinson = listPeopleArticle(path_parkinson, Fs, testID)
 listControl, controlDiagnoses = tableCreaterArticle(listControl, 0, testID)
 listParkinson, parkinsonDiagnoses = tableCreaterArticle(listParkinson, 1, testID)
 
 listPerson = pd.concat([listControl, listParkinson])
 listDiagnoses = np.concatenate([controlDiagnoses, parkinsonDiagnoses])
-print(listPerson.to_string())
 
-xTrain, xTest, yTrain, yTest = train_test_split(listPerson, listDiagnoses, test_size=0.5)
+xTrain, xTest, yTrain, yTest = train_test_split(listPerson, listDiagnoses, test_size=0.8)
 knnc = KNeighborsClassifier().fit(xTrain, yTrain)
 cartc = DecisionTreeClassifier().fit(xTrain, yTrain)
 rfc = RandomForestClassifier().fit(xTrain, yTrain)
