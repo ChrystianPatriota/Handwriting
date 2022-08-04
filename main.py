@@ -91,13 +91,15 @@ path_parkinson = [
     'data_motion/new_dataset/parkinson/H_p000-0042.txt',
     'data_motion/new_dataset/parkinson/H_p000-0043.txt'
 ]
-testID = 0
-Fs = 133
-listControl = listPeopleArticle(path_control, Fs, testID)
-listParkinson = listPeopleArticle(path_parkinson, Fs, testID)
-listControl, controlDiagnoses = tableCreaterArticle(listControl, 0, testID)
-listParkinson, parkinsonDiagnoses = tableCreaterArticle(listParkinson, 1, testID)
 
+Fs = 133
+listControl_0 = listPeopleArticle(path_control, Fs, 0)
+listParkinson_0 = listPeopleArticle(path_parkinson, Fs, 0)
+listControl_1 = listPeopleArticle(path_control, Fs, 1)
+listParkinson_1 = listPeopleArticle(path_parkinson, Fs, 1)
+listControl_2 = listPeopleArticle(path_control, Fs, 2)
+listParkinson_2 = listPeopleArticle(path_parkinson, Fs, 2)
+"""
 listPerson = pd.concat([listControl, listParkinson])
 listDiagnoses = np.concatenate([controlDiagnoses, parkinsonDiagnoses])
 
@@ -111,4 +113,4 @@ for model in modelsc:
     name = model.__class__.__name__
     predict = model.predict(xTest)
     print(name + ": ")
-    print("ACC-->", accuracy_score(yTest, predict))
+    print("ACC-->", accuracy_score(yTest, predict))"""

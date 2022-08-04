@@ -23,10 +23,10 @@ def doAllArticle(df, Fs, testID):
 
 def modulePosition(df, testID):
     module = np.empty(df.shape[0], dtype=float)
-    x = df['x']
-    y = df['y']
-    for i in df.index:
-        if i == df.index[-1]:
+    x = df['x'].values.tolist()
+    y = df['y'].values.tolist()
+    for i in range(df.index.size):
+        if i == df.index.size-1:
             module[i] = 0
         else:
             module[i] = ((x[i + 1] - x[i]) ** 2 + (y[i + 1] - y[i]) ** 2) ** (1 / 2)
@@ -35,8 +35,8 @@ def modulePosition(df, testID):
 
 def moduleVelocityArticle(df, Fs, testID):
     module = np.empty(df.shape[0], dtype=float)
-    for i in df.index:
-        module[i] = df[f"position_{testID}"][i] * Fs
+    for i in range(df.index.size):
+        module[i] = df[f"position_{testID}"][df.index[0]+i] * Fs
 
     df[f"velocity_{testID}"] = module
 
